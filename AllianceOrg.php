@@ -12,5 +12,5 @@ class AllianceOrg extends DBRow {
 	public int $added_dt;
 
 	/** Name of the player who added this org to this alliance */
-	public ?string $added_by;
+	public string $added_by;
 }
