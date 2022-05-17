@@ -76,6 +76,10 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 	#[NCA\Logger]
 	public LoggerWrapper $logger;
 
+	/** Which bot rank will all alliance members get */
+	#[NCA\Setting\Rank(accessLevel: "superadmin")]
+	public string $allianceMappedRank = "guild";
+
 	/**
 	 * The rank for each member of this bot's alliance
 	 * [(string)name => (int)rank]
@@ -109,7 +113,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 	 */
 	public function getSingleAccessLevel(string $sender): ?string {
 		if (isset($this->allianceMembers[$sender])) {
-			return "guild";
+			return $this->allianceMappedRank;
 		}
 		return null;
 	}
