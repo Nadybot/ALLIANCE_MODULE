@@ -37,7 +37,7 @@ use stdClass;
 	NCA\Instance,
 	NCA\HasMigrations,
 	NCA\DefineCommand(
-		command:     "alliance",
+		command: "alliance",
 		accessLevel: "mod",
 		description: "Manage orgs of the alliance",
 	)
@@ -83,6 +83,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 	/**
 	 * The rank for each member of this bot's alliance
 	 * [(string)name => (int)rank]
+	 *
 	 * @var array<string,int>
 	 */
 	public array $allianceMembers = [];
@@ -91,7 +92,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 	public function setup(): void {
 		$this->accessManager->registerProvider($this);
 		$query = $this->db->table(static::DB_MEMBERS, "a")
-			->leftJoin("players as p", function(JoinClause $join) {
+			->leftJoin("players as p", function (JoinClause $join) {
 				$join->on("a.name", "p.name")
 					->where("p.dimension", $this->db->getDim())
 					->on("p.guild_id", "a.org_id");
@@ -108,9 +109,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 		}, []);
 	}
 
-	/**
-	 * Make everyone in the alliance a "guild" member
-	 */
+	/** Make everyone in the alliance a "guild" member */
 	public function getSingleAccessLevel(string $sender): ?string {
 		if (isset($this->allianceMembers[$sender])) {
 			return $this->allianceMappedRank;
@@ -126,9 +125,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 		$this->updateOrgRosters();
 	}
 
-	/**
-	 * Do a manual alliance roster update
-	 */
+	/** Do a manual alliance roster update */
 	#[NCA\HandlesCommand("alliance")]
 	public function allianceUpdateCommand(
 		CmdContext $context,
@@ -153,7 +150,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 				null,
 				true,
 				[$this, "updateRosterForGuild"],
-				function() use (&$i, $callback, $args): void {
+				function () use (&$i, $callback, $args): void {
 					if (--$i === 0) {
 						if (isset($callback)) {
 							$callback(...$args);
@@ -247,16 +244,14 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 		}
 	}
 
-	/**
-	 * Add an organization to your alliance
-	 */
+	/** Add an organization to your alliance */
 	#[NCA\HandlesCommand("alliance")]
 	public function allianceAddCommand(
 		CmdContext $context,
 		#[NCA\Str("add")] string $action,
 		PNonNumber $orgName
 	): void {
-		$hasOrglist = $this->eventManager->getKeyForCronEvent(86400, "findorgcontroller.parseAllOrgsEvent") !== null;
+		$hasOrglist = $this->eventManager->getKeyForCronEvent(86400, "findorgcontroller.downloadAllOrgsEvent") !== null;
 		if (!$hasOrglist) {
 			$context->reply(
 				$this->text->blobWrap(
@@ -284,7 +279,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 			return;
 		}
 		$blob = $this->formatResults($orgs);
-		$msg = $this->text->makeBlob("Org Search Results for '{$orgName}' ($count)", $blob);
+		$msg = $this->text->makeBlob("Org Search Results for '{$orgName}' ({$count})", $blob);
 		$context->reply($msg);
 	}
 
@@ -295,9 +290,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 			->first();
 	}
 
-	/**
-	 * Add an organization to your alliance
-	 */
+	/** Add an organization to your alliance */
 	#[NCA\HandlesCommand("alliance")]
 	public function allianceAddIdCommand(
 		CmdContext $context,
@@ -330,9 +323,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 		);
 	}
 
-	/**
-	 * Show a list of the orgs in your alliance
-	 */
+	/** Show a list of the orgs in your alliance */
 	#[NCA\HandlesCommand("alliance")]
 	public function allianceListCommand(
 		CmdContext $context,
@@ -344,6 +335,7 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 			->groupBy("a.org_id", "a.added_dt", "a.added_by", "o.name")
 			->select("a.*", "o.name");
 		$query->selectRaw($query->rawFunc("COUNT", "*", "members")->getValue());
+
 		/** @var Collection<AllianceOrgStats> */
 		$orgs = $query->asObj(AllianceOrgStats::class);
 		$count = $orgs->count();
@@ -359,13 +351,11 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 				"<tab>Added by: <highlight>{$org->added_by}<end>\n".
 				"<tab>Action: [" . $this->text->makeChatcmd("remove", "/tell <myname> alliance rem {$org->org_id}") . "]\n\n";
 		}
-		$msg = $this->text->makeBlob("Orgs in your alliance ($count)", $blob);
+		$msg = $this->text->makeBlob("Orgs in your alliance ({$count})", $blob);
 		$context->reply($msg);
 	}
 
-	/**
-	 * Remove an org from your alliance
-	 */
+	/** Remove an org from your alliance */
 	#[NCA\HandlesCommand("alliance")]
 	public function allianceRemCommand(
 		CmdContext $context,
@@ -399,14 +389,12 @@ class AllianceController extends ModuleInstance implements AccessLevelProvider {
 		);
 	}
 
-	/**
-	 * @param Organization[] $orgs
-	 */
+	/** @param Organization[] $orgs */
 	public function formatResults(array $orgs): string {
 		$blob = '';
 		foreach ($orgs as $org) {
 			$addLink = $this->text->makeChatcmd('add', "/tell <myname> alliance add {$org->id}");
-			$blob .= "<{$org->faction}>{$org->name}<end> ({$org->id}) - {$org->num_members} members [$addLink]\n\n";
+			$blob .= "<{$org->faction}>{$org->name}<end> ({$org->id}) - {$org->num_members} members [{$addLink}]\n\n";
 		}
 		return $blob;
 	}
